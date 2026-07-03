@@ -16,7 +16,7 @@
 /playwright-report
 /blob-report
 /.playwright
-/tests/.artifacts
+**/tests/.artifacts
 
 # next.js
 /.next/
