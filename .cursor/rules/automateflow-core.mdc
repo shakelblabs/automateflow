@@ -1,0 +1,47 @@
+---
+description: AutomateFlow cross-feature architecture conventions — always apply, all features
+alwaysApply: true
+---
+
+# AutomateFlow — Core Architectural Conventions
+
+This rule applies across ALL AutomateFlow features, not just Campaign Canvas. Read this before starting work on any new feature spec (Sender Accounts, Template Library, Sending Engine, etc.) so established patterns aren't reinvented or contradicted.
+
+## The "external entity" pattern (established in Campaign Canvas v1/v2)
+
+Canvas nodes **reference** external entities via a dropdown/selector inside the node's config panel — they do not manage creation, editing, or CRUD of that entity inline. Established examples:
+- `New Lead Added` node references a **Lead List** (managed elsewhere, out of scope for canvas)
+- `Send Email` node references an **Email Template** (managed on a separate Template Builder page, out of scope for canvas — currently a stub route)
+
+**Default assumption for any new cross-cutting concept (e.g. Sender Accounts): follow this same pattern** — a campaign-level or node-level *reference* to something managed on its own dedicated page, not built inline as canvas UI. Deviating from this pattern (e.g. making something a full canvas node with inline CRUD) requires an explicit decision, documented in that feature's own spec — don't default into it.
+
+## Mock-data-then-swap pattern
+
+Features are built UI-first against clearly-labeled MOCK data (arrays, deterministic functions) with the same shape real data will eventually have, so swapping mock → real is a data-source change, not a structural rewrite. Always comment mock data/logic inline as `// MOCK — replace with real data once [X] exists`.
+
+## Spec-driven build process
+
+Every feature gets its own versioned spec doc (`docs/specs/[feature]-v[N]-spec.md`) before code is written. Specs include: scope boundaries (what's explicitly NOT being built), acceptance criteria as a checklist, and a "what changed / why" section for any version beyond v1. Frozen specs (already built + verified) are never edited in place — new versions are new files.
+
+## Two-subagent verification gate
+
+After a spec's build order is complete, run two subagents with fresh context before calling it done:
+- `spec-completeness-checker` — checklist-level PASS/FAIL/UNVERIFIABLE against the spec's acceptance criteria
+- `spec-verifier` — field-by-field audit of actual implementation against the spec's detailed schema
+
+Do not mark a feature "done" without both passing clean (or all gaps explicitly resolved/deferred with a documented reason).
+
+## Domain concept docs
+
+Cross-cutting domain logic that isn't UI (e.g. sending throttling rules, pricing logic, billing rules) lives in its own concept doc under `docs/concepts/`, separate from feature specs. Feature specs reference these rather than re-deriving the numbers. Current concept docs:
+- `docs/concepts/sender-account-behavior.md` — sending caps, jitter, pacing rules for the future Sender Account feature
+
+## Known open architectural decisions (check before assuming either way)
+
+- **Sender Account: campaign-level pooled setting vs. per-node override capability** — not yet decided. Default to campaign-level per the external-entity pattern above unless a spec explicitly locks in per-node override.
+- **Business-hours-only sending** — intended long-term, not yet decided for first shipped version. Flag explicitly, don't assume either way.
+
+## Testing
+
+Every new interaction gets a corresponding Playwright test, written alongside the feature, not deferred to the end. Full suite must stay green (all passing) at every checkpoint — a temporarily red suite is not acceptable even mid-build.
+

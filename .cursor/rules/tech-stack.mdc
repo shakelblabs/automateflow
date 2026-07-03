@@ -1,3 +1,147 @@
 ---
+description: Finalized tech stack, architecture, and monorepo conventions for AutomateFlow. This is the single source of truth for all technology decisions — always apply.
+globs:
 alwaysApply: true
 ---
+
+# AutomateFlow — Tech Stack & Architecture Rules
+
+This document is LOCKED. Do not introduce alternative frameworks, libraries, or
+architectural patterns without an explicit instruction from the user that
+overrides this file. If a task seems to require something outside this stack,
+STOP and ask rather than silently substituting a library.
+
+---
+
+## 1. Monorepo Structure
+
+Tooling: **Turborepo** (npm workspaces under the hood).
+
+```
+automateflow/
+├── apps/
+│   ├── web/                 # Next.js frontend (current campaign-canvas-builder moves here)
+│   └── api/                 # NestJS backend
+├── packages/
+│   ├── shared-types/        # Shared TypeScript types/interfaces (campaign, node, workflow schemas)
+│   ├── ui/                  # Shared shadcn/ui component library (if/when needed across apps)
+│   └── config/              # Shared eslint/tsconfig/tailwind base configs
+├── turbo.json
+├── package.json              # root workspace manifest
+└── .cursor/rules/
+```
+
+Rules:
+- Never duplicate types between `apps/web` and `apps/api`. Anything shared
+  (Campaign, WorkflowNode, WorkflowEdge, NodeConfig, etc.) lives in
+  `packages/shared-types` and is imported by both.
+- Never add a new top-level app or package without updating this file.
+- Root `package.json` only holds workspace config and dev tooling — no app
+  dependencies at root.
+
+---
+
+## 2. Frontend — `apps/web`
+
+| Layer | Technology | Notes |
+|---|---|---|
+| Framework | Next.js (App Router) | Public marketing pages (SSR/SEO) + SPA-like client workspace |
+| Language | TypeScript, strict mode | No `any` unless justified with a comment |
+| Styling | TailwindCSS v4 (CSS-first config) | No `tailwind.config.js`; tokens in `globals.css` via `@theme` |
+| Component library | shadcn/ui | Primitives are **Base UI** (`@base-ui/react`), NOT Radix — do not import Radix packages |
+| Canvas engine | `@xyflow/react` (React Flow v12) | This IS React Flow — do not install the legacy `reactflow` package |
+| Icons | `lucide-react` | |
+| State (local) | React `useState`/`useCallback`/Context | Current pattern for canvas/UI state |
+| State (global, when needed) | **Zustand** | Already present transitively via React Flow — adopt directly rather than adding Redux |
+| Data fetching / server state | **TanStack Query** | Introduce when `apps/api` exists; do not fetch directly in components with raw `fetch` for anything beyond trivial cases |
+| Toasts | `sonner` | |
+| Testing | Playwright (E2E) | Existing `tests/` spec pattern continues |
+
+Folder convention inside `apps/web/src/`:
+```
+app/                # routes only — thin, delegate to components/
+components/
+  <feature>/         # e.g. campaign/, template-builder/
+    nodes/
+    edges/
+  ui/                # shadcn primitives only
+lib/                 # pure functions, no React
+hooks/               # shared hooks
+```
+Fix existing drift: Cursor rules currently reference `src/features/campaign-canvas/`
+but code lives in `src/components/campaign/` — **`src/components/<feature>/` is
+the correct convention going forward**; update any stale rule files.
+
+---
+
+## 3. Backend — `apps/api`
+
+| Layer | Technology | Notes |
+|---|---|---|
+| Framework | **NestJS** (Node.js) | Modular, decorator-based, enterprise structure |
+| Language | TypeScript, strict mode | |
+| API style | REST (module-per-domain) | GraphQL not in scope unless explicitly added later |
+| ORM | **Prisma** | Schema-first, migrations via `prisma migrate` |
+| Database | **PostgreSQL** | Table partitioning by month for logging/event streams |
+| Vector store | **pgvector** (Postgres extension) | No separate vector DB — embeddings live in Postgres |
+| AI orchestration | **LangChain** | Connects to Claude / GPT / Gemini via token-optimized chains |
+| Queue | **BullMQ** on **Redis Cluster** | All delayed sends, throttling, daily caps, calendar waits |
+| Email send | **Nodemailer** | SMTP transactional delivery |
+| Email receive | **Mailparser** (IMAP) | Inbound reply parsing, sentiment extraction |
+| Payments (global) | **Stripe** | Card subscriptions |
+| Payments (India) | **Razorpay** | UPI/domestic cards |
+| Tax | Custom internal helpers | CGST/SGST/IGST split logic — not a third-party tax API unless later decided |
+
+NestJS module convention:
+```
+apps/api/src/
+  modules/
+    campaigns/
+    workflows/
+    billing/
+    email/
+    ai-rag/
+    auth/
+  common/           # guards, interceptors, pipes, decorators
+  prisma/           # PrismaService, schema.prisma
+```
+Each domain is a self-contained Nest module (controller + service + DTOs +
+module file). No cross-module direct DB access — go through the owning
+module's service.
+
+---
+
+## 4. Cross-Cutting Rules
+
+1. **No new dependency without checking this file first.** If a task seems to
+   need a library not listed here (e.g., a different state manager, a
+   different ORM, a different queue), stop and ask the user rather than
+   installing it.
+2. **Shared types are mandatory** for any data structure that crosses the
+   frontend/backend boundary — define once in `packages/shared-types`.
+3. **No mock/fake data disguised as real integration.** If AI generation,
+   payments, or email sending isn't wired up yet, it must be clearly labeled
+   as mock (as `ai-generate.ts` currently does) — never silently fake success.
+4. **Environment variables**: all secrets/config via `.env`, documented in
+   `.env.example` per app (`apps/web/.env.example`, `apps/api/.env.example`).
+   Never hardcode keys.
+5. **Testing**: Playwright E2E for `apps/web` continues as-is. `apps/api` gets
+   Jest (NestJS default) for unit/integration tests — do not introduce a
+   different test runner for the backend.
+6. **Docker**: once `apps/api` + Postgres + Redis exist, add
+   `docker-compose.yml` at root for local dev (Postgres, Redis, pgvector-enabled
+   Postgres image). Not needed while frontend-only.
+
+---
+
+## 5. Current Migration Status (update as work progresses)
+
+- [x] Frontend canvas builder (`@xyflow/react`) — built, standalone Next.js app
+- [ ] Convert standalone Next.js app into `apps/web` inside Turborepo
+- [ ] Scaffold `apps/api` (NestJS)
+- [ ] Scaffold `packages/shared-types` and migrate campaign/node types out of `apps/web`
+- [ ] Prisma schema + Postgres + pgvector setup
+- [ ] Redis + BullMQ scaffolding
+- [ ] Stripe + Razorpay integration
+- [ ] Email (Nodemailer + Mailparser) integration
+- [ ] LangChain + real LLM wiring (replace mock `ai-generate.ts`)
