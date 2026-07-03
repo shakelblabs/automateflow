@@ -12,14 +12,18 @@
 
 # testing
 /coverage
-/test-results
+**/test-results/
 /playwright-report
 /blob-report
 /.playwright
 **/tests/.artifacts
 
+# turborepo
+**/.turbo/
+packages/*/dist/
+
 # next.js
-/.next/
+**/.next/
 /out/
 
 # production
