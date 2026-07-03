@@ -1,0 +1,34 @@
+---
+description: Campaign Canvas v1 build rules — always apply in this project
+alwaysApply: true
+---
+
+# Campaign Canvas v1 — Project Rules
+
+These rules govern any work under `src/features/campaign-canvas/` (adjust path to match your actual repo structure). They take precedence over convenience or "helpful" additions the agent might otherwise make.
+
+## Scope boundaries
+
+1. This is a **UI-only build**. Never add network calls, database clients, auth logic, or real API integrations. All data is mock/local React state or a static JSON fixture. If a task seems to require a backend, stop and ask rather than scaffolding a mock backend framework, an API route, or a server file.
+2. **Campaign Builder and Workflow Engine are permanently separate modules.** Never import from, reference, or create files under a shared `workflow-engine` path. If similar logic seems reusable, flag it — do not silently couple the two modules.
+3. **Do not build Unibox, reply drafting, RAG, or sentiment classification logic.** The canvas only needs a single dead-end node (`Handoff: Unibox`) representing this boundary. Do not implement behavior behind it.
+4. **Do not add:** auto-save, undo/redo history, canvas versioning, multiplayer/collaboration cursors. If not explicitly in the spec, it is out of scope — remove it if added.
+5. **Node types are fixed** to Section 2 of `/docs/specs/campaign-canvas-v2-spec.md` (current source of truth). Do not invent new node types. If something seems missing, ask rather than add. Keep `/docs/specs/campaign-canvas-v1-spec.md` as historical record only — do not edit it.
+
+## Canvas library
+
+6. Canvas library is `@xyflow/react` (React Flow) v12 — already installed, do not swap to Vue Flow, GoJS, or any alternative.
+7. Node rendering must use **custom components registered via `nodeTypes`** — never rely on React Flow's default node rendering with only CSS overrides. Each node category (Trigger / Action / Logic / Handoff) needs its own visual component.
+8. Edges must use **custom components via `edgeTypes`** where labeling or branch distinction is required (e.g. the Replied? Yes/No branch).
+9. Branching nodes must use **multiple named `<Handle>` components** with distinct `id`s — never a single ambiguous output point standing in for multiple logical branches.
+
+## Code hygiene
+
+10. Every node component's on-canvas summary line must be **derived reactively from its config state** — never leave static placeholder text in a committed component.
+11. After adding, deleting, or connecting a node, run a mental (or actual) check: are there orphaned edges referencing a deleted node ID? Clean up connected edges whenever a node is deleted.
+12. Write the corresponding Playwright interaction test immediately after building each canvas interaction (add node, select node, connect nodes, delete node, toggle config) — do not defer all tests to the end.
+
+## When in doubt
+
+13. If a request conflicts with `/docs/specs/campaign-canvas-v2-spec.md`, the spec wins. Flag the conflict rather than silently choosing one interpretation.
+14. If the current diff would touch files outside `src/features/campaign-canvas/`, stop and confirm scope before proceeding.
