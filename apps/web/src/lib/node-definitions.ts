@@ -13,7 +13,7 @@ import {
   UserPlus,
 } from "lucide-react";
 
-import { getTemplateById } from "@/lib/email-templates";
+import { getTemplateById, type EmailTemplate } from "@/lib/email-templates";
 import { getEffectiveTemplateId } from "@/lib/send-email-config";
 
 /**
@@ -72,7 +72,7 @@ export interface NodeDefinition {
    * Live, auto-generated one-line summary of the current config, rendered in the
    * node card body. MUST be derived from config — never static placeholder text.
    */
-  summary: (config: NodeConfigValues) => string;
+  summary: (config: NodeConfigValues, templates?: EmailTemplate[]) => string;
 }
 
 export const PALETTE_GROUPS: {
@@ -198,13 +198,13 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
     hasOutput: true,
     // Full config rendered by SendEmailConfig (template selector + A/B shell).
     fields: [],
-    summary: (config) => {
+    summary: (config, templates) => {
       if (config.abEnabled) {
         const nameA =
-          getTemplateById(getEffectiveTemplateId(config, "aTemplateId"))
+          getTemplateById(getEffectiveTemplateId(config, "aTemplateId"), templates)
             ?.name ?? "No template selected";
         const nameB =
-          getTemplateById(getEffectiveTemplateId(config, "bTemplateId"))
+          getTemplateById(getEffectiveTemplateId(config, "bTemplateId"), templates)
             ?.name ?? "No template selected";
         const metric = labelFor(
           [
@@ -217,7 +217,7 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
         return `A/B: ${nameA} vs ${nameB} (${metric})`;
       }
       const templateId = getEffectiveTemplateId(config);
-      const template = getTemplateById(templateId);
+      const template = getTemplateById(templateId, templates);
       return template ? `Template: ${template.name}` : "No template selected";
     },
   },
@@ -442,7 +442,11 @@ export function getDefaultConfig(type: string): NodeConfigValues {
   return config;
 }
 
-export function summarize(type: string, config: NodeConfigValues): string {
+export function summarize(
+  type: string,
+  config: NodeConfigValues,
+  templates?: EmailTemplate[],
+): string {
   const definition = getNodeDefinition(type);
-  return definition ? definition.summary(config) : "";
+  return definition ? definition.summary(config, templates) : "";
 }

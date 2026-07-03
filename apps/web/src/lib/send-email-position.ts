@@ -2,7 +2,7 @@ import type { Edge, Node } from "@xyflow/react";
 
 import { getNodeDefinition } from "@/lib/node-definitions";
 import { filterTemplates, type EmailTemplate } from "@/lib/email-templates";
-import type { WorkflowNodeData } from "@/components/campaign/nodes/types";
+import type { WorkflowNodeData } from "@automateflow/shared-types";
 
 const SEND_EMAIL_TYPE = "action-send-email";
 
@@ -126,8 +126,9 @@ export function filterTemplatesForNode(
   nodes: Node<WorkflowNodeData>[],
   edges: Edge[],
   nodeId: string,
+  templates: EmailTemplate[],
 ): EmailTemplate[] {
   const stepPosition = getStepPosition(nodes, edges, nodeId);
   const familySize = getTotalStepsInPath(nodes, edges);
-  return filterTemplates(stepPosition, familySize);
+  return filterTemplates(stepPosition, familySize, templates);
 }

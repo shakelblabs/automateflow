@@ -1,12 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Edge, Node } from "@xyflow/react";
 import { toast } from "sonner";
 
 import {
   CampaignHeader,
-  type CampaignStatus,
 } from "@/components/campaign/campaign-header";
 import { BlueprintListDialog } from "@/components/campaign/blueprint-list-dialog";
 import { GenerateDialog } from "@/components/campaign/generate-dialog";
@@ -18,36 +16,35 @@ import {
   type WorkflowCanvasHandle,
 } from "@/components/campaign/workflow-canvas";
 import type { WorkflowNodeData } from "@/components/campaign/workflow-node";
+import { useCampaignCanvas } from "@/components/shell/campaign-canvas-provider";
 import { generateSequence } from "@/lib/ai-generate";
-import {
-  serializeBlueprint,
-  type CampaignBlueprint,
-} from "@/lib/campaign-blueprint";
+import { serializeBlueprint } from "@/lib/campaign-blueprint";
 
 export function CampaignBuilder() {
   const canvasRef = useRef<WorkflowCanvasHandle>(null);
-  const [campaignName, setCampaignName] = useState("Q2 Outbound Sequence");
-  const [subtitle, setSubtitle] = useState("Cold outreach · 4 touches");
-  const [status, setStatus] = useState<CampaignStatus>("draft");
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    setNodes,
+    setEdges,
+    nextNodeId,
+    campaignName,
+    setCampaignName,
+    subtitle,
+    setSubtitle,
+    status,
+    setStatus,
+    savedBlueprints,
+    setSavedBlueprints,
+    selectedNode,
+    setSelectedNode,
+  } = useCampaignCanvas();
+
   const [generateOpen, setGenerateOpen] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [blueprintListOpen, setBlueprintListOpen] = useState(false);
-  const [savedBlueprints, setSavedBlueprints] = useState<CampaignBlueprint[]>(
-    [],
-  );
-  const [selectedNode, setSelectedNode] = useState<Node<WorkflowNodeData> | null>(
-    null,
-  );
-  const [canvasNodes, setCanvasNodes] = useState<Node<WorkflowNodeData>[]>([]);
-  const [canvasEdges, setCanvasEdges] = useState<Edge[]>([]);
-
-  const handleCanvasChange = useCallback(
-    (nodes: Node<WorkflowNodeData>[], edges: Edge[]) => {
-      setCanvasNodes(nodes);
-      setCanvasEdges(edges);
-    },
-    [],
-  );
 
   const handleSave = useCallback(() => {
     toast.success("Campaign saved", {
@@ -81,14 +78,14 @@ export function CampaignBuilder() {
 
   const handleSaveTemplateSubmit = useCallback(
     (name: string) => {
-      const blueprint = serializeBlueprint(name, canvasNodes, canvasEdges);
+      const blueprint = serializeBlueprint(name, nodes, edges);
       setSavedBlueprints((current) => [...current, blueprint]);
       setSaveTemplateOpen(false);
       toast.success("Campaign template saved", {
         description: `"${name}" is available in Saved Templates.`,
       });
     },
-    [canvasNodes, canvasEdges],
+    [nodes, edges, setSavedBlueprints],
   );
 
   const handleGenerateSubmit = useCallback((prompt: string) => {
@@ -99,15 +96,18 @@ export function CampaignBuilder() {
     toast.success("Canvas generated", {
       description: `Built ${sequence.steps.length} steps from your prompt — every step is editable.`,
     });
-  }, []);
+  }, [setSelectedNode]);
 
   const handleAddNodeFromPalette = useCallback((type: string) => {
     canvasRef.current?.addNode(type);
   }, []);
 
-  const handleNodeSelect = useCallback((node: Node<WorkflowNodeData> | null) => {
-    setSelectedNode(node);
-  }, []);
+  const handleNodeSelect = useCallback(
+    (node: import("@xyflow/react").Node<WorkflowNodeData> | null) => {
+      setSelectedNode(node);
+    },
+    [setSelectedNode],
+  );
 
   const handleConfigChange = useCallback(
     (config: WorkflowNodeData["config"]) => {
@@ -120,21 +120,20 @@ export function CampaignBuilder() {
           : null,
       );
     },
-    [selectedNode],
+    [selectedNode, setSelectedNode],
   );
 
   const handleClosePanel = useCallback(() => {
     setSelectedNode(null);
     canvasRef.current?.clearSelection();
-  }, []);
+  }, [setSelectedNode]);
 
   const handleDeleteNode = useCallback(() => {
     if (!selectedNode) return;
     canvasRef.current?.deleteNode(selectedNode.id);
     setSelectedNode(null);
-  }, [selectedNode]);
+  }, [selectedNode, setSelectedNode]);
 
-  // Section 1: pressing Esc returns the inspector to the "No step selected" state.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") handleClosePanel();
@@ -144,7 +143,7 @@ export function CampaignBuilder() {
   }, [handleClosePanel]);
 
   return (
-    <div className="flex h-screen flex-col bg-white">
+    <div className="flex h-full flex-col bg-white">
       <CampaignHeader
         campaignName={campaignName}
         onCampaignNameChange={setCampaignName}
@@ -168,14 +167,20 @@ export function CampaignBuilder() {
             ref={canvasRef}
             selectedNodeId={selectedNode?.id ?? null}
             onNodeSelect={handleNodeSelect}
-            onCanvasChange={handleCanvasChange}
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            setNodes={setNodes}
+            setEdges={setEdges}
+            nextNodeId={nextNodeId}
           />
         </main>
 
         <NodeConfigPanel
           selectedNode={selectedNode}
-          canvasNodes={canvasNodes}
-          canvasEdges={canvasEdges}
+          canvasNodes={nodes}
+          canvasEdges={edges}
           onConfigChange={handleConfigChange}
           onClose={handleClosePanel}
           onDelete={handleDeleteNode}

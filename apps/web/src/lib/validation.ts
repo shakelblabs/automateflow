@@ -2,7 +2,7 @@ import type { Edge, Node } from "@xyflow/react";
 
 import { getNodeDefinition } from "@/lib/node-definitions";
 import { getEffectiveTemplateId } from "@/lib/send-email-config";
-import type { WorkflowNodeData } from "@/components/campaign/nodes/types";
+import type { WorkflowNodeData } from "@automateflow/shared-types";
 
 export type ValidationCode =
   | "no-entry-trigger"

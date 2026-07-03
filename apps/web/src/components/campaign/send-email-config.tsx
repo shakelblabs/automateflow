@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import type { Edge, Node } from "@xyflow/react";
 
-import type { WorkflowNodeData } from "@/components/campaign/nodes/types";
+import type { WorkflowNodeData } from "@automateflow/shared-types";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { getTemplateById } from "@/lib/email-templates";
+import { useTemplateLibrary } from "@/components/shell/template-library-provider";
 import type { NodeConfigValues } from "@/lib/node-definitions";
 import {
   getEffectiveTemplateId,
@@ -58,10 +58,17 @@ function TemplateSelectorForm({
   templateField,
   scope,
 }: TemplateSelectorFormProps) {
+  const { templates, getTemplateById } = useTemplateLibrary();
   const templateId = getEffectiveTemplateId(config, templateField);
   const filteredTemplates = useMemo(
-    () => filterTemplatesForNode(canvasNodes, canvasEdges, selectedNodeId),
-    [canvasNodes, canvasEdges, selectedNodeId],
+    () =>
+      filterTemplatesForNode(
+        canvasNodes,
+        canvasEdges,
+        selectedNodeId,
+        templates,
+      ),
+    [canvasNodes, canvasEdges, selectedNodeId, templates],
   );
   const selectedTemplate = getTemplateById(templateId);
 

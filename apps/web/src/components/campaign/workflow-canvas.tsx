@@ -3,7 +3,6 @@
 import {
   forwardRef,
   useCallback,
-  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -16,47 +15,22 @@ import {
   ReactFlow,
   ReactFlowProvider,
   addEdge,
-  useEdgesState,
-  useNodesState,
   useReactFlow,
   type Connection,
   type Edge,
+  type EdgeChange,
   type Node,
+  type NodeChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 import { nodeTypes, type WorkflowNodeData } from "@/components/campaign/nodes";
 import { edgeTypes } from "@/components/campaign/edges";
-import {
-  LEAD_LISTS,
-  getDefaultConfig,
-  getNodeDefinition,
-} from "@/lib/node-definitions";
+import { getDefaultConfig, getNodeDefinition } from "@/lib/node-definitions";
 import type { GeneratedSequence } from "@/lib/ai-generate";
 import { validateCanvas } from "@/lib/validation";
 import { SelectedNodeProvider } from "@/components/campaign/selected-node-context";
 import { ValidationBanner } from "@/components/campaign/validation-banner";
-
-const INITIAL_NODES: Node<WorkflowNodeData>[] = [
-  {
-    id: "node-1",
-    type: "trigger",
-    position: { x: 320, y: 80 },
-    data: {
-      nodeType: "trigger-new-lead",
-      label: "New Lead Added",
-      // Seed with the first mock lead list so the app loads clean (no warning).
-      config: {
-        ...getDefaultConfig("trigger-new-lead"),
-        leadList: LEAD_LISTS[0].id,
-      },
-    },
-  },
-];
-
-const INITIAL_EDGES: Edge[] = [];
-
-let nodeIdCounter = 2;
 
 export interface WorkflowCanvasHandle {
   addNode: (type: string) => void;
@@ -72,34 +46,43 @@ export interface WorkflowCanvasHandle {
 interface WorkflowCanvasProps {
   selectedNodeId: string | null;
   onNodeSelect: (node: Node<WorkflowNodeData> | null) => void;
-  onCanvasChange?: (nodes: Node<WorkflowNodeData>[], edges: Edge[]) => void;
+  nodes: Node<WorkflowNodeData>[];
+  edges: Edge[];
+  onNodesChange: (changes: NodeChange<Node<WorkflowNodeData>>[]) => void;
+  onEdgesChange: (changes: EdgeChange[]) => void;
+  setNodes: React.Dispatch<React.SetStateAction<Node<WorkflowNodeData>[]>>;
+  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+  nextNodeId: () => string;
 }
 
 const WorkflowCanvasInner = forwardRef<WorkflowCanvasHandle, WorkflowCanvasProps>(
-  function WorkflowCanvasInner({ selectedNodeId, onNodeSelect, onCanvasChange }, ref) {
+  function WorkflowCanvasInner(
+    {
+      selectedNodeId,
+      onNodeSelect,
+      nodes,
+      edges,
+      onNodesChange,
+      onEdgesChange,
+      setNodes,
+      setEdges,
+      nextNodeId,
+    },
+    ref,
+  ) {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const { screenToFlowPosition, fitView } = useReactFlow();
-    const [nodes, setNodes, onNodesChange] = useNodesState<Node<WorkflowNodeData>>(INITIAL_NODES);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
 
-    // Live validation — recomputed on every nodes/edges change (Section 3).
     const issues = useMemo(() => validateCanvas(nodes, edges), [nodes, edges]);
-
-    useEffect(() => {
-      onCanvasChange?.(nodes, edges);
-    }, [nodes, edges, onCanvasChange]);
 
     const addNode = useCallback(
       (type: string, position?: { x: number; y: number }) => {
         const definition = getNodeDefinition(type);
-        // Deferred/coming-soon nodes (Section 2.9) can never be added to canvas.
         if (!definition || definition.deferred) return;
 
-        const id = `node-${nodeIdCounter++}`;
+        const id = nextNodeId();
 
         setNodes((current) => {
-          // Click-add (no drop position): cascade below the lowest node so new
-          // nodes never overlap existing ones (Section 5 acceptance criterion).
           const resolved =
             position ??
             (current.length === 0
@@ -124,7 +107,7 @@ const WorkflowCanvasInner = forwardRef<WorkflowCanvasHandle, WorkflowCanvasProps
           return [...current, newNode];
         });
       },
-      [setNodes],
+      [setNodes, nextNodeId],
     );
 
     const updateNodeConfig = useCallback(
@@ -140,8 +123,6 @@ const WorkflowCanvasInner = forwardRef<WorkflowCanvasHandle, WorkflowCanvasProps
       [setNodes],
     );
 
-    // Delete a node and clean up every edge referencing it (rule 11) — no
-    // orphaned connectors left rendering.
     const deleteNode = useCallback(
       (nodeId: string) => {
         setNodes((current) => current.filter((node) => node.id !== nodeId));
@@ -155,9 +136,6 @@ const WorkflowCanvasInner = forwardRef<WorkflowCanvasHandle, WorkflowCanvasProps
       [setNodes, setEdges, onNodeSelect],
     );
 
-    // Chat-to-canvas (Section 4): replace the canvas with a pre-wired sequence.
-    // Nodes are built through the exact same getDefaultConfig path as manual
-    // adds, so a generated node is indistinguishable in the data model.
     const applyGenerated = useCallback(
       (sequence: GeneratedSequence) => {
         const idByKey = new Map<string, string>();
@@ -165,7 +143,7 @@ const WorkflowCanvasInner = forwardRef<WorkflowCanvasHandle, WorkflowCanvasProps
         const generatedNodes = sequence.steps.flatMap((step) => {
           const definition = getNodeDefinition(step.type);
           if (!definition) return [];
-          const id = `node-${nodeIdCounter++}`;
+          const id = nextNodeId();
           idByKey.set(step.key, id);
           const node: Node<WorkflowNodeData> = {
             id,
@@ -205,10 +183,9 @@ const WorkflowCanvasInner = forwardRef<WorkflowCanvasHandle, WorkflowCanvasProps
         setNodes(generatedNodes);
         setEdges(generatedEdges);
         onNodeSelect(null);
-        // Frame the freshly generated sequence once it has rendered.
         window.setTimeout(() => fitView({ padding: 0.2, duration: 300 }), 60);
       },
-      [setNodes, setEdges, onNodeSelect, fitView],
+      [setNodes, setEdges, onNodeSelect, fitView, nextNodeId],
     );
 
     useImperativeHandle(
@@ -225,7 +202,6 @@ const WorkflowCanvasInner = forwardRef<WorkflowCanvasHandle, WorkflowCanvasProps
 
     const onConnect = useCallback(
       (connection: Connection) => {
-        // Yes/No branch handles get a labeled, color-coded edge (Section 2.5).
         const branch =
           connection.sourceHandle === "yes"
             ? { label: "Yes", tone: "yes" as const }
@@ -234,17 +210,12 @@ const WorkflowCanvasInner = forwardRef<WorkflowCanvasHandle, WorkflowCanvasProps
               : {};
 
         setEdges((current) =>
-          addEdge(
-            { ...connection, type: "labeled", data: branch },
-            current,
-          ),
+          addEdge({ ...connection, type: "labeled", data: branch }, current),
         );
       },
       [setEdges],
     );
 
-    // Keep external selection in sync and guarantee edge cleanup when React
-    // Flow deletes nodes via its built-in interaction (e.g. Backspace).
     const onNodesDelete = useCallback(
       (deleted: Node[]) => {
         const deletedIds = new Set(deleted.map((node) => node.id));
@@ -316,7 +287,12 @@ const WorkflowCanvasInner = forwardRef<WorkflowCanvasHandle, WorkflowCanvasProps
             proOptions={{ hideAttribution: true }}
             className="bg-slate-50"
           >
-            <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#cbd5e1" />
+            <Background
+              variant={BackgroundVariant.Dots}
+              gap={20}
+              size={1}
+              color="#cbd5e1"
+            />
             <Controls
               showInteractive={false}
               className="!rounded-[0.625rem] !border-slate-200 !shadow-sm [&>button]:!border-slate-200 [&>button]:!bg-white [&>button]:hover:!bg-slate-50"

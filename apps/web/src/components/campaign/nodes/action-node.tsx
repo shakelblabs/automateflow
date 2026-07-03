@@ -4,7 +4,8 @@ import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 
 import { useSelectedNodeId } from "@/components/campaign/selected-node-context";
-import type { WorkflowNodeData } from "@/components/campaign/nodes/types";
+import type { WorkflowNodeData } from "@automateflow/shared-types";
+import { useTemplateLibrary } from "@/components/shell/template-library-provider";
 import { getNodeDefinition, summarize } from "@/lib/node-definitions";
 import { cn } from "@/lib/utils";
 
@@ -16,9 +17,10 @@ import { cn } from "@/lib/utils";
 function ActionNodeComponent({ id, data }: NodeProps) {
   const nodeData = data as WorkflowNodeData;
   const selected = useSelectedNodeId() === id;
+  const { templates } = useTemplateLibrary();
   const definition = getNodeDefinition(nodeData.nodeType);
   const Icon = definition?.icon;
-  const summary = summarize(nodeData.nodeType, nodeData.config);
+  const summary = summarize(nodeData.nodeType, nodeData.config, templates);
   const terminal = definition?.terminal;
 
   return (

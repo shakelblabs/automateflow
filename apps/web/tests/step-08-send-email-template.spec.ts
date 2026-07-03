@@ -105,7 +105,7 @@ test.describe("Step 8 — Send Email template selector (v2 §3)", () => {
     );
   });
 
-  test("Template Builder link opens the coming-soon stub page", async ({
+  test("Template Builder link opens the Template Builder page", async ({
     page,
   }) => {
     await page.goto("/");
@@ -114,9 +114,8 @@ test.describe("Step 8 — Send Email template selector (v2 §3)", () => {
 
     await page.getByTestId("template-builder-link").click();
     await expect(page).toHaveURL(/\/template-builder$/);
-    await expect(page.getByRole("heading")).toHaveText(
-      "Template Builder — coming soon",
-    );
+    await expect(page.getByRole("heading", { name: "Template Builder" })).toBeVisible();
+    await expect(page.getByTestId("template-family-list")).toBeVisible();
   });
 
   test("template dropdown filters by step position and family size (§3.2)", async ({

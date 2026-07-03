@@ -1,2 +1,2 @@
 export { nodeTypes } from "@/components/campaign/nodes";
-export type { WorkflowNodeData } from "@/components/campaign/nodes/types";
+export type { WorkflowNodeData } from "@automateflow/shared-types";

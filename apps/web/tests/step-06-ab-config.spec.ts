@@ -207,7 +207,7 @@ test.describe("Step 6 — Send Email A/B config", () => {
     );
   });
 
-  test("Variant A and B Template Builder links open the coming-soon stub page", async ({
+  test("Variant A and B Template Builder links open the Template Builder page", async ({
     page,
   }) => {
     const node = await addSendEmail(page);
@@ -216,9 +216,10 @@ test.describe("Step 6 — Send Email A/B config", () => {
 
     await page.getByTestId("variant-a-template-builder-link").click();
     await expect(page).toHaveURL(/\/template-builder$/);
-    await expect(page.getByRole("heading")).toHaveText(
-      "Template Builder — coming soon",
-    );
+    await expect(
+      page.getByRole("heading", { name: "Template Builder" }),
+    ).toBeVisible();
+    await expect(page.getByTestId("template-family-list")).toBeVisible();
 
     const nodeB = await addSendEmail(page);
     await wireOneStepPath(page, nodeB);
@@ -226,9 +227,10 @@ test.describe("Step 6 — Send Email A/B config", () => {
 
     await page.getByTestId("variant-b-template-builder-link").click();
     await expect(page).toHaveURL(/\/template-builder$/);
-    await expect(page.getByRole("heading")).toHaveText(
-      "Template Builder — coming soon",
-    );
+    await expect(
+      page.getByRole("heading", { name: "Template Builder" }),
+    ).toBeVisible();
+    await expect(page.getByTestId("template-family-list")).toBeVisible();
   });
 
   test("summary reflects A/B state and variant template selections", async ({

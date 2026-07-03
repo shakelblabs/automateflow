@@ -10,6 +10,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@automateflow/shared-types": "*",
     "@base-ui/react": "^1.6.0",
     "@xyflow/react": "^12.11.1",
     "class-variance-authority": "^0.7.1",

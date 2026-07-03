@@ -13,6 +13,30 @@ export function trackConsoleErrors(page: Page): string[] {
   return errors;
 }
 
+/** Clears TemplateLibraryProvider seed data (non-production test hook). */
+export async function resetTemplateLibraryForTest(page: Page) {
+  await page.waitForFunction(() => {
+    return Boolean(
+      (
+        window as Window & {
+          __templateLibraryTest?: { resetTemplates: () => void };
+        }
+      ).__templateLibraryTest?.resetTemplates,
+    );
+  });
+  await page.evaluate(() => {
+    const hook = (
+      window as Window & {
+        __templateLibraryTest?: { resetTemplates: () => void };
+      }
+    ).__templateLibraryTest;
+    if (!hook) {
+      throw new Error("Template library test hook is not available");
+    }
+    hook.resetTemplates();
+  });
+}
+
 /**
  * Applies a deterministic canvas fixture via the Generate-with-AI entry point.
  * Used for backward-compat render tests that cannot use the palette (deferred nodes).

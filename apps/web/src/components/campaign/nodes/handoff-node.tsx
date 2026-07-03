@@ -5,7 +5,7 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { LogOut } from "lucide-react";
 
 import { useSelectedNodeId } from "@/components/campaign/selected-node-context";
-import type { WorkflowNodeData } from "@/components/campaign/nodes/types";
+import type { WorkflowNodeData } from "@automateflow/shared-types";
 import { getNodeDefinition, summarize } from "@/lib/node-definitions";
 import { cn } from "@/lib/utils";
 

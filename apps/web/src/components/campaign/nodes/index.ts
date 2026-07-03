@@ -17,4 +17,4 @@ export const nodeTypes: NodeTypes = {
   handoff: HandoffNode,
 };
 
-export type { WorkflowNodeData } from "@/components/campaign/nodes/types";
+export type { WorkflowNodeData } from "@automateflow/shared-types";

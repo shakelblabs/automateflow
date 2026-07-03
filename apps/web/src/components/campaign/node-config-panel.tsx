@@ -4,6 +4,7 @@ import { Trash2, X } from "lucide-react";
 
 import { AppButton } from "@/components/app-button";
 import { SendEmailConfig } from "@/components/campaign/send-email-config";
+import { useTemplateLibrary } from "@/components/shell/template-library-provider";
 import {
   getNodeDefinition,
   summarize,
@@ -163,6 +164,7 @@ export function NodeConfigPanel({
   onClose,
   onDelete,
 }: NodeConfigPanelProps) {
+  const { templates } = useTemplateLibrary();
   const definition = selectedNode
     ? getNodeDefinition(selectedNode.data.nodeType)
     : undefined;
@@ -270,7 +272,7 @@ export function NodeConfigPanel({
           <div className="rounded-[0.625rem] border border-slate-200 bg-slate-50 p-3">
             <p className="text-xs font-medium text-slate-600">Summary</p>
             <p className="mt-1 text-sm text-slate-900">
-              {summarize(selectedNode.data.nodeType, config)}
+              {summarize(selectedNode.data.nodeType, config, templates)}
             </p>
           </div>
         </div>

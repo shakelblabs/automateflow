@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { LayoutTemplate, X } from "lucide-react";
 
 import { AppButton } from "@/components/app-button";
-import type { CampaignBlueprint } from "@/lib/campaign-blueprint";
+import type { CampaignBlueprint } from "@automateflow/shared-types";
 
 interface BlueprintListDialogProps {
   open: boolean;
