@@ -1,0 +1,36 @@
+{
+  "_comment": "Scratchpad/manifest for the docs-index sync skill+hook. Do not hand-edit unless you're also updating AGENTS.md to match — this file exists so the hook can cheaply detect drift (directory listing diff) instead of re-reading every doc on every edit. Keys are filenames only (not full paths); folders are recorded once below.",
+  "folders": {
+    "specs": "apps/web/docs/specs",
+    "concepts": "apps/web/docs/concepts",
+    "prompts": "apps/web/docs/prompts",
+    "rules": ".cursor/rules",
+    "agents": ".cursor/agents"
+  },
+  "specs": [
+    "campaign-canvas-v1-spec.md",
+    "campaign-canvas-v2-spec.md",
+    "platform-shell-sender-v1-spec.md",
+    "Email-template-builder-v1-spec.md",
+    "lead-list-management-v1-spec.md",
+    "integrations-v1-spec.md"
+  ],
+  "concepts": [
+    "sender-account-behavior.md"
+  ],
+  "prompts": [
+    "integrations-antigravity-prompt.md",
+    "lead-list-management-antigravity-prompt.md"
+  ],
+  "rules": [
+    "automateflow-core.mdc",
+    "tech-stack.mdc",
+    "campaign-canvas.mdc",
+    "context7.mdc"
+  ],
+  "agents": [
+    "spec-completeness-checker.mdc",
+    "spec-verifier.mdc"
+  ],
+  "lastSyncedWithAgentsMd": "2026-07-04"
+}

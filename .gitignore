@@ -39,11 +39,15 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (secrets live here — never commit real keys)
 .env*
+!.env.example
 
 # vercel
 .vercel
+
+# cursor hook debug logs (local only, not useful in version control)
+.cursor/hooks/logs/
 
 # typescript
 *.tsbuildinfo

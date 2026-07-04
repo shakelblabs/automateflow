@@ -1,6 +1,6 @@
 ---
 name: spec-completeness-checker
-description: Verifies a completed build against the acceptance checklist in campaign-canvas-v1-spec.md. Run this ONLY after the full build (all 7 steps of the build order) is complete. Runs with fresh context — do not carry over assumptions from the build conversation.
+description: Verifies a completed build against the acceptance checklist in a given feature spec under docs/specs/. Run this ONLY after the full build for that spec is complete. Runs with fresh context — do not carry over assumptions from the build conversation. When invoking this agent, pass the exact spec file path to check (defaults to docs/specs/campaign-canvas-v1-spec.md if none is given, for backward compatibility).
 ---
 
 # Spec Completeness Checker
@@ -9,14 +9,15 @@ You are checking a finished implementation against a written spec — not buildi
 
 ## Instructions
 
-1. Read `/docs/specs/campaign-canvas-v1-spec.md` in full — do not rely on any memory of prior conversation about this project.
-2. Read the actual current state of the code under `src/features/campaign-canvas/` (or the equivalent path) — components, not just file names.
-3. Go through **every single checkbox in Section 5 (Acceptance Criteria)** of the spec, one at a time. For each item:
+1. Read the spec file you were given in full (e.g. `/docs/specs/lead-list-management-v1-spec.md`) — do not rely on any memory of prior conversation about this project. If no spec path was given, default to `/docs/specs/campaign-canvas-v1-spec.md`.
+2. Read the actual current state of the code the spec describes — components, providers, routes — not just file names. Use the spec's own file/path references (e.g. its "Cursor Project Setup Notes" section) to locate the relevant code; do not assume a fixed path like `src/features/campaign-canvas/` if the spec points elsewhere (e.g. `src/app/<route>/`, `src/components/shell/`).
+3. Go through **every single checkbox in the spec's "Acceptance Criteria" section**, one at a time. For each item:
    - Mark **PASS** only if you can point to the specific file/component/line that implements it
    - Mark **FAIL** if it's missing, partially implemented, or you're not certain
-   - Mark **UNVERIFIABLE** if it requires actually running the app to confirm (e.g. "no console errors on zoom") — list these separately for the human to check manually
-4. Also check Section 0 (boundaries) — flag any violation (backend code, Unibox logic, Workflow Engine coupling, disallowed features like undo/redo) even though these aren't in the Section 5 checklist.
-5. Also check Section 2.10 — confirm custom `nodeTypes`/`edgeTypes` are actually registered and used, not just default React Flow nodes with CSS.
+   - Mark **UNVERIFIABLE** if it requires actually running the app to confirm (e.g. "no console errors on navigation") — list these separately for the human to check manually
+4. Also check the spec's "hard boundaries" / "Explicitly deferred" sections (numbering varies by spec — e.g. Section 0 and the final numbered section) — flag any violation (backend code, real network calls, disallowed features, scope creep into another spec's territory) even though these aren't in the acceptance checklist.
+5. If the spec defines a live-wiring/provider contract (e.g. "must not break an existing node's card summary," "data source swap only") — explicitly verify that contract wasn't silently changed, not just that the new feature works in isolation.
+6. If the spec is Campaign Canvas v1 specifically, also check its Section 2.10 — confirm custom `nodeTypes`/`edgeTypes` are actually registered and used, not just default React Flow nodes with CSS.
 
 ## Output format
 
@@ -25,7 +26,7 @@ Produce a table: `Item | Status | Evidence/Location | Notes`
 End with:
 - Total pass / fail / unverifiable count
 - A prioritized list of what to fix first (broken interactions before cosmetic gaps)
-- Explicit confirmation: "No Section 0 boundary violations found" OR a list of violations
+- Explicit confirmation: "No boundary violations found" OR a list of violations, citing the spec section each violated
 
 ## What NOT to do
 

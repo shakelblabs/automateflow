@@ -1,0 +1,37 @@
+---
+description: Use Context7 MCP for current library/API docs before writing stack code. Prevents outdated syntax and hallucinated APIs.
+alwaysApply: true
+---
+
+# Context7 — Live Library Docs
+
+Before writing or changing code that uses a stack library, query Context7 for that library’s **current** API. Do not invent APIs from training memory when Context7 is available.
+
+## When to use
+
+- Setup, config, or code generation involving any package in the tech stack
+- Unfamiliar or version-sensitive APIs (Next.js App Router, Tailwind v4, React Flow, Base UI, NestJS, Prisma, etc.)
+- Any error that looks like a syntax/API mismatch with installed package versions
+
+## How
+
+1. Call `resolve-library-id` with the library name and the user’s task (unless the ID is already known below).
+2. Call `query-docs` with that library ID and a specific question (include the major version when known).
+3. Write code that matches the returned docs **and** `tech-stack.mdc` (Context7 supplies docs; it does not override which libraries we use).
+
+## Pinned library IDs (this repo)
+
+| Package | Version (approx) | Context7 library ID | Notes |
+|---|---|---|---|
+| `next` | 16.x | `/vercel/next.js` | Mention **Next.js 16** |
+| `react` / `react-dom` | 19.x | `/facebook/react` | Mention **React 19** |
+| `tailwindcss` | 4.x | `/tailwindlabs/tailwindcss` | CSS-first; no `tailwind.config.js` |
+| `@xyflow/react` | 12.x | `/xyflow/xyflow` | Not legacy `reactflow` |
+| `@base-ui/react` | 1.x | resolve via Context7 | Not Radix |
+| `@playwright/test` | 1.x | `/microsoft/playwright` | |
+| NestJS / Prisma / BullMQ / Zustand / TanStack Query | when added | resolve via Context7 | Pin IDs here when packages land |
+
+## Do not
+
+- Swap libraries because Context7 docs show an alternative (stack is locked in `tech-stack.mdc`)
+- Skip Context7 for library work and rely on outdated patterns (e.g. Next 13/14, Tailwind v3, Radix)

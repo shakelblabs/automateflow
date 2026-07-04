@@ -134,7 +134,7 @@ export function SenderAccountDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-slate-900/40 p-4 pt-[8vh]"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-slate-900/20 backdrop-blur-sm p-4 pt-[8vh] transition-all duration-300"
       data-testid="sender-account-overlay"
       onClick={onClose}
     >
@@ -143,18 +143,18 @@ export function SenderAccountDialog({
         aria-label={mode === "add" ? "Add sender account" : "Edit sender account"}
         data-testid="sender-account-dialog"
         onClick={(event) => event.stopPropagation()}
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl"
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-300"
       >
-        <div className="sticky top-0 flex items-start justify-between border-b border-slate-200 bg-white p-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
-              <Mail className="h-4 w-4" />
+        <div className="sticky top-0 flex items-start justify-between border-b border-slate-200/80 bg-white/90 backdrop-blur-md p-5 z-10">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-100 to-teal-50 text-emerald-600 shadow-sm ring-1 ring-emerald-500/10">
+              <Mail className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">
+              <h2 className="text-base font-semibold tracking-tight text-slate-900">
                 {mode === "add" ? "Add Sender Account" : "Edit Sender Account"}
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs font-medium text-slate-500">
                 Configure outbound email credentials (mock/local only).
               </p>
             </div>
@@ -165,18 +165,19 @@ export function SenderAccountDialog({
             onClick={onClose}
             aria-label="Close"
             data-testid="sender-account-close"
+            className="hover:bg-slate-100/80 rounded-full"
           >
             <X className="h-4 w-4" />
           </AppButton>
         </div>
 
-        <div className="p-4">
+        <div className="p-5">
           <Tabs defaultValue="manual">
-            <TabsList className="mb-4 w-full">
-              <TabsTrigger value="oauth" className="flex-1" disabled>
+            <TabsList className="mb-5 w-full bg-slate-100/50 p-1 rounded-lg">
+              <TabsTrigger value="oauth" className="flex-1 rounded-md" disabled>
                 OAuth
               </TabsTrigger>
-              <TabsTrigger value="manual" className="flex-1">
+              <TabsTrigger value="manual" className="flex-1 rounded-md">
                 Manual (SMTP/IMAP)
               </TabsTrigger>
             </TabsList>
@@ -188,7 +189,7 @@ export function SenderAccountDialog({
                 disabled
                 title={OAUTH_TOOLTIP}
                 data-testid="oauth-google"
-                className="w-full"
+                className="w-full bg-slate-50 text-slate-400 border-dashed"
               >
                 Connect with Google
               </AppButton>
@@ -198,13 +199,13 @@ export function SenderAccountDialog({
                 disabled
                 title={OAUTH_TOOLTIP}
                 data-testid="oauth-outlook"
-                className="w-full"
+                className="w-full bg-slate-50 text-slate-400 border-dashed"
               >
                 Connect with Outlook
               </AppButton>
             </TabsContent>
 
-            <TabsContent value="manual" className="space-y-4">
+            <TabsContent value="manual" className="space-y-5">
               <div className="flex gap-2">
                 <AppButton
                   variant="secondary"
@@ -212,6 +213,7 @@ export function SenderAccountDialog({
                   disabled
                   title={OAUTH_TOOLTIP}
                   data-testid="oauth-google-inline"
+                  className="flex-1 bg-slate-50 text-slate-400 border-dashed"
                 >
                   Connect with Google
                 </AppButton>
@@ -221,13 +223,14 @@ export function SenderAccountDialog({
                   disabled
                   title={OAUTH_TOOLTIP}
                   data-testid="oauth-outlook-inline"
+                  className="flex-1 bg-slate-50 text-slate-400 border-dashed"
                 >
                   Connect with Outlook
                 </AppButton>
               </div>
 
               <div>
-                <Label htmlFor="sender-email" className="text-xs text-slate-700">
+                <Label htmlFor="sender-email" className="text-xs font-semibold text-slate-700">
                   Email address
                 </Label>
                 <Input
@@ -236,17 +239,17 @@ export function SenderAccountDialog({
                   value={form.email}
                   onChange={(event) => update({ email: event.target.value })}
                   placeholder="you@company.com"
-                  className="mt-1.5 focus-visible:ring-emerald-500"
+                  className="mt-1.5 shadow-sm focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:border-emerald-500 transition-all bg-white"
                 />
               </div>
 
-              <fieldset className="space-y-3 rounded-lg border border-slate-200 p-3">
-                <legend className="px-1 text-xs font-medium text-slate-700">
-                  SMTP
+              <fieldset className="space-y-4 rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 shadow-sm">
+                <legend className="px-2 text-xs font-semibold tracking-wide text-slate-600 bg-slate-50/50">
+                  SMTP Details
                 </legend>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2">
-                    <Label htmlFor="smtp-host" className="text-xs text-slate-700">
+                    <Label htmlFor="smtp-host" className="text-xs font-medium text-slate-700">
                       Host
                     </Label>
                     <Input
@@ -255,11 +258,11 @@ export function SenderAccountDialog({
                       value={form.smtpHost}
                       onChange={(event) => update({ smtpHost: event.target.value })}
                       placeholder="smtp.example.com"
-                      className="mt-1 focus-visible:ring-emerald-500"
+                      className="mt-1.5 shadow-sm focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:border-emerald-500 transition-all bg-white"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="smtp-port" className="text-xs text-slate-700">
+                    <Label htmlFor="smtp-port" className="text-xs font-medium text-slate-700">
                       Port
                     </Label>
                     <Input
@@ -267,12 +270,12 @@ export function SenderAccountDialog({
                       data-testid="smtp-port-input"
                       value={form.smtpPort}
                       onChange={(event) => update({ smtpPort: event.target.value })}
-                      className="mt-1 focus-visible:ring-emerald-500"
+                      className="mt-1.5 shadow-sm focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:border-emerald-500 transition-all bg-white"
                     />
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="smtp-user" className="text-xs text-slate-700">
+                  <Label htmlFor="smtp-user" className="text-xs font-medium text-slate-700">
                     Username
                   </Label>
                   <Input
@@ -282,11 +285,11 @@ export function SenderAccountDialog({
                     onChange={(event) =>
                       update({ smtpUsername: event.target.value })
                     }
-                    className="mt-1 focus-visible:ring-emerald-500"
+                    className="mt-1.5 shadow-sm focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:border-emerald-500 transition-all bg-white"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="smtp-pass" className="text-xs text-slate-700">
+                  <Label htmlFor="smtp-pass" className="text-xs font-medium text-slate-700">
                     Password
                   </Label>
                   <Input
@@ -297,27 +300,28 @@ export function SenderAccountDialog({
                     onChange={(event) =>
                       update({ smtpPassword: event.target.value })
                     }
-                    className="mt-1 focus-visible:ring-emerald-500"
+                    className="mt-1.5 shadow-sm focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:border-emerald-500 transition-all bg-white"
                   />
                 </div>
               </fieldset>
 
-              <fieldset className="space-y-3 rounded-lg border border-slate-200 p-3">
-                <legend className="px-1 text-xs font-medium text-slate-700">
-                  IMAP
+              <fieldset className="space-y-4 rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 shadow-sm">
+                <legend className="px-2 text-xs font-semibold tracking-wide text-slate-600 bg-slate-50/50">
+                  IMAP Details
                 </legend>
-                <label className="flex items-center gap-2 text-xs text-slate-600">
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={sameAsSmtp}
                     onChange={(event) => setSameAsSmtp(event.target.checked)}
                     data-testid="same-as-smtp-checkbox"
+                    className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                   />
                   Same as SMTP credentials
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2">
-                    <Label htmlFor="imap-host" className="text-xs text-slate-700">
+                    <Label htmlFor="imap-host" className="text-xs font-medium text-slate-700">
                       Host
                     </Label>
                     <Input
@@ -327,11 +331,11 @@ export function SenderAccountDialog({
                       onChange={(event) => update({ imapHost: event.target.value })}
                       placeholder="imap.example.com"
                       disabled={sameAsSmtp}
-                      className="mt-1 focus-visible:ring-emerald-500"
+                      className="mt-1.5 shadow-sm focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:border-emerald-500 transition-all bg-white disabled:bg-slate-50/50 disabled:opacity-75"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="imap-port" className="text-xs text-slate-700">
+                    <Label htmlFor="imap-port" className="text-xs font-medium text-slate-700">
                       Port
                     </Label>
                     <Input
@@ -340,14 +344,14 @@ export function SenderAccountDialog({
                       value={form.imapPort}
                       onChange={(event) => update({ imapPort: event.target.value })}
                       disabled={sameAsSmtp}
-                      className="mt-1 focus-visible:ring-emerald-500"
+                      className="mt-1.5 shadow-sm focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:border-emerald-500 transition-all bg-white disabled:bg-slate-50/50 disabled:opacity-75"
                     />
                   </div>
                 </div>
               </fieldset>
 
               <div>
-                <Label htmlFor="daily-cap" className="text-xs text-slate-700">
+                <Label htmlFor="daily-cap" className="text-xs font-semibold text-slate-700">
                   Daily cap
                 </Label>
                 <Input
@@ -359,22 +363,12 @@ export function SenderAccountDialog({
                   onChange={(event) =>
                     update({ dailyCap: Number(event.target.value) || DEFAULT_DAILY_CAP })
                   }
-                  className="mt-1.5 focus-visible:ring-emerald-500"
+                  className="mt-1.5 shadow-sm focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:border-emerald-500 transition-all bg-white"
                 />
               </div>
 
-              <AppButton
-                variant="secondary"
-                size="sm"
-                disabled
-                title={TEST_CONNECTION_TOOLTIP}
-                data-testid="test-connection"
-              >
-                Test Connection
-              </AppButton>
-
               {error ? (
-                <p className="text-xs text-red-600" data-testid="sender-form-error">
+                <p className="text-xs font-medium text-red-600 bg-red-50 p-2 rounded-md" data-testid="sender-form-error">
                   {error}
                 </p>
               ) : null}
@@ -382,22 +376,32 @@ export function SenderAccountDialog({
           </Tabs>
         </div>
 
-        <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t border-slate-200 bg-white p-4">
-          {mode === "edit" && onDelete ? (
-            <AppButton
-              variant="ghost"
-              size="sm"
-              onClick={onDelete}
-              data-testid="sender-account-delete"
-              className="text-red-600 hover:text-red-700"
-            >
-              Delete
-            </AppButton>
-          ) : (
-            <span />
-          )}
+        <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t border-slate-200/80 bg-slate-50/90 backdrop-blur-md p-5 z-10 rounded-b-2xl">
           <div className="flex items-center gap-2">
-            <AppButton variant="ghost" size="sm" onClick={onClose}>
+            <AppButton
+              variant="secondary"
+              size="sm"
+              disabled
+              title={TEST_CONNECTION_TOOLTIP}
+              data-testid="test-connection"
+              className="bg-white text-slate-400 border border-slate-200/60"
+            >
+              Test Connection
+            </AppButton>
+            {mode === "edit" && onDelete && (
+              <AppButton
+                variant="ghost"
+                size="sm"
+                onClick={onDelete}
+                data-testid="sender-account-delete"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 font-medium"
+              >
+                Delete
+              </AppButton>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <AppButton variant="ghost" size="sm" onClick={onClose} className="font-medium">
               Cancel
             </AppButton>
             <AppButton
@@ -405,6 +409,7 @@ export function SenderAccountDialog({
               size="sm"
               onClick={submit}
               data-testid="sender-account-save"
+              className="bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 transition-all border-0 font-medium"
             >
               {mode === "add" ? "Add account" : "Save changes"}
             </AppButton>

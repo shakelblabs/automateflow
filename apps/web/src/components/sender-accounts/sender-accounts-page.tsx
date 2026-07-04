@@ -74,13 +74,17 @@ export function SenderAccountsPage() {
   }, [selectedAccount, deleteAccount]);
 
   return (
-    <div className="flex h-full flex-col bg-white">
-      <SenderAccountsHeader onAdd={openAdd} />
+    <div className="flex h-full flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100/50">
+      <SenderAccountsHeader onAdd={openAdd} accounts={accounts} />
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        <div className="mx-auto flex max-w-4xl flex-col gap-6">
-          <SenderAccountList accounts={accounts} onSelect={openEdit} />
-          <PoolVisualization accounts={accounts} />
+      <div className="min-h-0 flex-1 overflow-y-auto p-6 md:p-8">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            <SenderAccountList accounts={accounts} onSelect={openEdit} />
+          </div>
+          <div className="lg:col-span-1">
+            <PoolVisualization accounts={accounts} />
+          </div>
         </div>
       </div>
 

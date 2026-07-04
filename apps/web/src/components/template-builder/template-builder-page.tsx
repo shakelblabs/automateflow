@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { Mailbox } from "lucide-react";
 
 import type { FamilyDraft } from "@/components/shell/template-library-provider";
 import { useTemplateLibrary } from "@/components/shell/template-library-provider";
@@ -9,8 +10,6 @@ import { FamilySetupForm } from "@/components/template-builder/family-setup-form
 import { TemplateBuilderHeader } from "@/components/template-builder/template-builder-header";
 import { TemplateFamilyList } from "@/components/template-builder/template-family-list";
 import { defaultStepName } from "@/lib/template-families";
-
-type View = "list" | "setup" | "editor";
 
 function createEmptyDraft(
   familyName: string,
@@ -65,18 +64,20 @@ function familyToDraft(
 
 export function TemplateBuilderPage() {
   const { templates, getFamilies, saveFamily } = useTemplateLibrary();
-  const [view, setView] = useState<View>("list");
+  const [activeFamilyId, setActiveFamilyId] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [setupName, setSetupName] = useState("");
   const [setupSize, setSetupSize] = useState<1 | 3 | 5>(3);
   const [draft, setDraft] = useState<FamilyDraft | null>(null);
 
-  const families = useMemo(() => getFamilies(), [getFamilies, templates]);
+  const families = useMemo(() => getFamilies(), [getFamilies]);
 
   const startCreate = useCallback(() => {
     setSetupName("");
     setSetupSize(3);
     setDraft(null);
-    setView("setup");
+    setActiveFamilyId(null);
+    setIsCreating(true);
   }, []);
 
   const startEdit = useCallback(
@@ -91,55 +92,82 @@ export function TemplateBuilderPage() {
           templates,
         ),
       );
-      setView("editor");
+      setActiveFamilyId(familyId);
+      setIsCreating(false);
     },
     [families, templates],
   );
 
   const handleSetupContinue = () => {
     setDraft(createEmptyDraft(setupName.trim(), setupSize));
-    setView("editor");
+    setIsCreating(false);
   };
 
   const handleSave = () => {
     if (!draft) return;
     saveFamily(draft);
+    // After saving, if it was new, set it as active
+    if (!draft.familyId) {
+      // In a real app we'd get the new ID, but here we just clear the draft and active state
+      // Actually, since saveFamily doesn't return the ID, we can just reset to empty state,
+      // or we can try to guess the ID. For now, let's just reset the view.
+      setActiveFamilyId(null);
+    }
     setDraft(null);
-    setView("list");
+  };
+
+  const cancelSetup = () => {
+    setIsCreating(false);
   };
 
   return (
     <div className="flex h-full flex-col bg-white">
-      <TemplateBuilderHeader
-        onCreateFamily={startCreate}
-        showCreate={view === "list"}
-      />
+      <TemplateBuilderHeader />
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        {view === "list" ? (
-          <TemplateFamilyList families={families} onSelectFamily={startEdit} />
-        ) : null}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {/* Left Pane: Sequence Library */}
+        <TemplateFamilyList 
+          families={families}
+          activeFamilyId={isCreating ? null : activeFamilyId}
+          onSelectFamily={startEdit}
+          onCreateFamily={startCreate}
+        />
 
-        {view === "setup" ? (
-          <FamilySetupForm
-            familyName={setupName}
-            familySize={setupSize}
-            onFamilyNameChange={setSetupName}
-            onFamilySizeChange={setSetupSize}
-            onContinue={handleSetupContinue}
-            onCancel={() => setView("list")}
-          />
-        ) : null}
-
-        {view === "editor" && draft ? (
-          <FamilyEditor
-            draft={draft}
-            onDraftChange={setDraft}
-            onSave={handleSave}
-            onCancel={() => setView("list")}
-            isEditing={Boolean(draft.familyId)}
-          />
-        ) : null}
+        {/* Right Pane: Workspace Canvas */}
+        <div className="flex-1 bg-slate-50/30">
+          {isCreating ? (
+            <div className="flex h-full items-center justify-center p-6">
+              <FamilySetupForm
+                familyName={setupName}
+                familySize={setupSize}
+                onFamilyNameChange={setSetupName}
+                onFamilySizeChange={setSetupSize}
+                onContinue={handleSetupContinue}
+                onCancel={cancelSetup}
+              />
+            </div>
+          ) : draft ? (
+            <div className="h-full">
+              <FamilyEditor
+                draft={draft}
+                onDraftChange={setDraft}
+                onSave={handleSave}
+              />
+            </div>
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                <Mailbox className="h-8 w-8" />
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-slate-900">
+                Sequence Builder
+              </h3>
+              <p className="mt-2 max-w-sm text-sm text-slate-500">
+                Select a sequence from the sidebar to start editing, or create a new one to begin building your multi-step campaign.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
